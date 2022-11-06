@@ -3,7 +3,13 @@
 # Released under the GNU General Public License Version 2 (GPLv2).
 # -----------------------------------------------------------------------------
 
-obj-$(CONFIG_USB_WPAN_HCD) += ozwpan.o
+all:
+	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) $(KMOD_OPTIONS) modules
+
+clean:
+	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) $(KMOD_OPTIONS) clean
+
+obj-m += ozwpan.o
 ozwpan-y := \
 	ozmain.o \
 	ozpd.o \
