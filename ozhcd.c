@@ -77,7 +77,7 @@ struct oz_endpoint {
 	struct list_head urb_list;	/* List of oz_urb_link items. */
 	struct list_head link;		/* For isoc ep, links in to isoc
 					   lists of oz_port. */
-	struct timespec timestamp;
+	struct timespec64 timestamp;
 	int credit;
 	int credit_ceiling;
 	u8 ep_num;
@@ -482,7 +482,7 @@ static int oz_enqueue_ep_urb(struct oz_port *port, u8 ep_addr, int in_dir,
 	if (port->hpd) {
 		list_add_tail(&urbl->link, &ep->urb_list);
 		if (!in_dir && ep_addr && (ep->credit < 0)) {
-			getrawmonotonic(&ep->timestamp);
+			ktime_get_raw_ts64(&ep->timestamp);
 			ep->credit = 0;
 		}
 	} else {
@@ -1042,17 +1042,17 @@ int oz_hcd_heartbeat(void *hport)
 	LIST_HEAD(xfr_list);
 	struct urb *urb;
 	struct oz_endpoint *ep;
-	struct timespec ts, delta;
+	struct timespec64 ts, delta;
 
-	getrawmonotonic(&ts);
+	ktime_get_raw_ts64(&ts);
 	/* Check the OUT isoc endpoints to see if any URB data can be sent.
 	 */
 	spin_lock_bh(&ozhcd->hcd_lock);
 	list_for_each_entry(ep, &port->isoc_out_ep, link) {
 		if (ep->credit < 0)
 			continue;
-		delta = timespec_sub(ts, ep->timestamp);
-		ep->credit += div_u64(timespec_to_ns(&delta), NSEC_PER_MSEC);
+		delta = timespec64_sub(ts, ep->timestamp);
+		ep->credit += div_u64(timespec64_to_ns(&delta), NSEC_PER_MSEC);
 		if (ep->credit > ep->credit_ceiling)
 			ep->credit = ep->credit_ceiling;
 		ep->timestamp = ts;
@@ -1093,8 +1093,8 @@ int oz_hcd_heartbeat(void *hport)
 			}
 			continue;
 		}
-		delta = timespec_sub(ts, ep->timestamp);
-		ep->credit += div_u64(timespec_to_ns(&delta), NSEC_PER_MSEC);
+		delta = timespec64_sub(ts, ep->timestamp);
+		ep->credit += div_u64(timespec64_to_ns(&delta), NSEC_PER_MSEC);
 		ep->timestamp = ts;
 		list_for_each_entry_safe(urbl, n, &ep->urb_list, link) {
 			struct urb *urb = urbl->urb;

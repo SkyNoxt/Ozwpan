@@ -127,9 +127,9 @@ void oz_usb_stop(struct oz_pd *pd, int pause)
 	pd->app_ctx[OZ_APPID_USB] = NULL;
 	spin_unlock_bh(&pd->app_lock[OZ_APPID_USB]);
 	if (usb_ctx) {
-		struct timespec ts, now;
+		struct timespec64 ts, now;
 
-		getnstimeofday(&ts);
+		ktime_get_ts64(&ts);
 		oz_dbg(ON, "USB service stopping...\n");
 		usb_ctx->stopped = 1;
 		/* At this point the reference count on the usb context should
@@ -139,7 +139,7 @@ void oz_usb_stop(struct oz_pd *pd, int pause)
 		 * until they leave but timeout after 1 second.
 		 */
 		while ((atomic_read(&usb_ctx->ref_count) > 2)) {
-			getnstimeofday(&now);
+			ktime_get_ts64(&now);
 			/*Approx 1 Sec. this is not perfect calculation*/
 			if (now.tv_sec != ts.tv_sec)
 				break;

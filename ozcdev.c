@@ -253,11 +253,9 @@ static long oz_cdev_ioctl(struct file *filp, unsigned int cmd,
 	if (_IOC_NR(cmd) > OZ_IOCTL_MAX)
 		return -ENOTTY;
 	if (_IOC_DIR(cmd) & _IOC_READ)
-		rc = !access_ok(VERIFY_WRITE, (void __user *)arg,
-			_IOC_SIZE(cmd));
+		rc = !access_ok((void __user *)arg, _IOC_SIZE(cmd));
 	else if (_IOC_DIR(cmd) & _IOC_WRITE)
-		rc = !access_ok(VERIFY_READ, (void __user *)arg,
-			_IOC_SIZE(cmd));
+		rc = !access_ok((void __user *)arg, _IOC_SIZE(cmd));
 	if (rc)
 		return -EFAULT;
 	switch (cmd) {
